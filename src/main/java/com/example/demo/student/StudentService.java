@@ -1,9 +1,12 @@
 package com.example.demo.student;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class StudentService {
@@ -11,6 +14,7 @@ public class StudentService {
     private final StudentRepository studentRepository;
 
 
+    @Autowired
     public StudentService(StudentRepository studentRepository) {
         this.studentRepository = studentRepository;
     }
@@ -18,15 +22,32 @@ public class StudentService {
 
     public List<Student> getStudents(){
         return studentRepository.findAll();
+    }
+
+    public void addNewStudent(Student student) {
+
+        Optional<Student> studentOptional = studentRepository.findStudentByEmail(student.getEmail());
+        if(studentOptional.isPresent()){
+            throw new IllegalStateException("email already taken");
+        }
+        studentRepository.save(student);
+        System.out.println(student);
+    }
+
+    public void deleteStudent(Long studentId) {
+        boolean exists = studentRepository.existsById(studentId);
+        if(!exists){
+            throw new IllegalStateException("student with "+studentId+" does not exist");
+        }
+        studentRepository.deleteById(studentId);
+    }
+
+    @Transactional
+    public void updateStudent(Long studentId, String name, String email) {
+        Student student = studentRepository.findById(studentId).orElseThrow(() -> new IllegalStateException("student with "+studentId+" does not exist"));
+        student.setName(name);
+        student.setEmail(email);
 
 
-        /*
-        return List.of(new Student(
-                1L,
-                "Mariem",
-                23,
-                LocalDate.of(2022,12,22),
-                "mariemdrira@gmail.com"
-        ));*/
     }
 }
